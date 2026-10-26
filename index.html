@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuel Management System - Prototipo Interactivo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+  background: #edf4ff;
+  color: #1e293b;
+  transition: background 0.3s;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #0f172a, #2563eb, #f97316);
+  animation: fadeIn 0.8s ease-out;
+}
+
+.login-box {
+  width: 400px;
+  background: #fff;
+  padding: 35px;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.2);
+  text-align: center;
+  transition: transform 0.3s;
+}
+
+.login-box:hover {
+  transform: scale(1.02);
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+}
+
+button {
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #f97316;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.full-btn {
+  width: 100%;
+}
+
+.app {
+  display: none;
+  max-width: 1500px;
+  margin: auto;
+  padding: 20px;
+  animation: fadeIn 0.5s;
+}
+
+.topbar {
+  background: #fff;
+  padding: 20px;
+  border-radius: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,.05);
+  margin-bottom: 20px;
+  transition: all 0.3s;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.tab {
+  background: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  transform: translateY(-3px);
+  background: #e0f2fe;
+}
+
+.tab.active {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 8px 14px rgba(37,99,235,0.3);
+}
+
+.section {
+  display: none;
+  background: #fff;
+  padding: 24px;
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.04);
+  animation: slideIn 0.3s ease;
+}
+
+.section.active {
+  display: block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  background: linear-gradient(135deg, #ffffff, #f8fbff);
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 18px rgba(37,99,235,.08);
+  transition: all 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(37,99,235,0.15);
+  border-color: #bfdbfe;
+}
+
+.alert-critical {
+  background: #fee2e2;
+  border-left: 6px solid #dc2626;
+  padding: 16px;
+  border-radius: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.alert-medium {
+  background: #fef3c7;
+  border-left: 6px solid #d97706;
+  padding: 16px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.alert-normal {
+  background: #dcfce7;
+  border-left: 6px solid #16a34a;
+  padding: 16px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.fleet-card {
+  background: linear-gradient(135deg, #ffffff, #f0f9ff);
+  border: 1px solid #bfdbfe;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 22px rgba(37,99,235,.08);
+  transition: all 0.2s;
+}
+
+.fleet-card:hover {
+  transform: translateX(5px);
+  background: linear-gradient(135deg, #ffffff, #e6f0ff);
+}
+
+.kpi {
+  font-size: 30px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #2563eb, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+canvas {
+  margin-top: 24px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.04);
+  transition: all 0.3s;
+}
+
+canvas:hover {
+  box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+}
+
+th {
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 700;
+  padding: 12px;
+}
+
+tr:hover {
+  background: #f8fbff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.small {
+  font-size: 13px;
+  color: #666;
+}
+
+.btn-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.btn-export {
+  background: #16a34a;
+}
+
+.btn-export-excel {
+  background: #2563eb;
+}
+
+/* Animación de carga en gráficos */
+.chart-container {
+  position: relative;
+}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+<div class="login-box">
+<h1>⛽ Fuel Management System</h1>
+<p>Control Inteligente de Combustible para Flota</p>
+<input id="user" placeholder="Usuario">
+<input id="pass" type="password" placeholder="Contraseña">
+<button class="full-btn" onclick="login()">Iniciar Sesión</button>
+<p class="small" style="margin-top:15px">admin / 0000</p>
+</div>
+</div>
+
+<div class="app" id="app">
+<div class="topbar">
+<div>
+<h2>⛽ Fuel Management System</h2>
+<div id="welcome"></div>
+</div>
+<button onclick="logout()">Cerrar sesión</button>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div id="dashboard" class="section active">
+<h2>📊 Dashboard KPI</h2>
+<div class="grid">
+<div class="card"><div class="kpi" id="vehiculosActivos">30</div>Vehículos activos</div>
+<div class="card"><div class="kpi" id="consumoDiario">6,500 L</div>Consumo diario promedio</div>
+<div class="card"><div class="kpi">120 T</div>Mercancía diaria entregada</div>
+<div class="card"><div class="kpi" id="rendimientoProm">8.2 km/L</div>Rendimiento promedio</div>
+<div class="card"><div class="kpi">$1.75</div>Costo por kilómetro</div>
+<div class="card"><div class="kpi">92%</div>Eficiencia de consumo</div>
+<div class="card"><div class="kpi">$1,000</div>Gasto promedio combustible</div>
+<div class="card"><div class="kpi">Terpel</div>Proveedor recomendado</div>
+</div>
+<canvas id="fuelChart"></canvas>
+<canvas id="driverChart"></canvas>
+<canvas id="monthlyChart"></canvas>
+<canvas id="vehicleChart"></canvas>
+</div>
+
+<div id="solicitudes" class="section">
+<h2>📝 Solicitudes de Combustible</h2>
+<input type="text" id="solConductor" placeholder="Conductor">
+<select id="solVehiculo">
+<option>Refrigerado</option><option>Plataforma</option><option>Cama Baja</option>
+<option>Cortina Lateral</option><option>Caja Cerrada</option><option>Rígido</option>
+<option>Articulado</option><option>Sedán Ventas</option><option>Furgón</option>
+<option>Tanque</option><option>Jaula</option><option>Volquete</option>
+<option>Estacas</option><option>Portacontenedor</option><option>Mixer</option>
+<option>Cisterna</option><option>Lonas</option><option>Car Carrier</option>
+<option>Camión Grúa</option><option>Dumper</option><option>Pick-up</option>
+<option>SUV Ejecutivo</option><option>Compacto Delivery</option><option>Microbus</option>
+<option>Minivan</option><option>Camión 3/4</option><option>Tracto Camión</option>
+<option>Plataforma baja</option><option>Frío Intenso</option><option>Caja Seca</option>
+</select>
+<input type="text" id="solOdometro" placeholder="Odómetro actual (km)">
+<input type="number" id="solNivel" placeholder="Nivel actual de combustible (%)">
+<button onclick="registrarSolicitud()">📌 Registrar Solicitud</button>
+<table id="tablaSolicitudes">
+<thead><tr><th>Conductor</th><th>Vehículo</th><th>Odómetro</th><th>Nivel Combustible</th><th>Estado</th></tr></thead>
+<tbody>
+<tr><td>Teodoro</td><td>Refrigerado</td><td>125,400 km</td><td>35%</td><td>Aprobada</td></tr>
+<tr><td>Luis</td><td>Plataforma</td><td>98,200 km</td><td>42%</td><td>Pendiente</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="carga" class="section">
+<h2>⛽ Registro de Carga</h2>
+<select id="cargaVehiculo">
+<option>Refrigerado</option><option>Plataforma</option><option>Cama Baja</option>
+<option>Cortina Lateral</option><option>Caja Cerrada</option><option>Rígido</option>
+<option>Articulado</option><option>Sedán Ventas</option><option>Furgón</option>
+<option>Tanque</option><option>Jaula</option><option>Volquete</option>
+<option>Estacas</option><option>Portacontenedor</option><option>Mixer</option>
+<option>Cisterna</option><option>Lonas</option><option>Car Carrier</option>
+<option>Camión Grúa</option><option>Dumper</option><option>Pick-up</option>
+<option>SUV Ejecutivo</option><option>Compacto Delivery</option><option>Microbus</option>
+<option>Minivan</option><option>Camión 3/4</option><option>Tracto Camión</option>
+<option>Plataforma baja</option><option>Frío Intenso</option><option>Caja Seca</option>
+</select>
+<input type="text" id="cargaConductor" placeholder="Conductor">
+<input type="number" id="cargaLitros" placeholder="Litros cargados">
+<input type="text" id="cargaFactura" placeholder="Factura">
+<input type="text" id="cargaProveedor" placeholder="Proveedor">
+<button onclick="registrarCarga()">⛽ Registrar Carga</button>
+<table id="tablaCargas">
+<thead><tr><th>Vehículo</th><th>Conductor</th><th>Litros</th><th>Factura</th><th>Proveedor</th><th>Fecha/Hora</th></tr></thead>
+<tbody>
+<tr><td>Refrigerado</td><td>Teodoro</td><td>150</td><td>FAC-001</td><td>Terpel</td><td>2026-04-28 10:30</td></tr>
+<tr><td>Plataforma</td><td>Luis</td><td>200</td><td>FAC-002</td><td>Delta</td><td>2026-04-28 11:15</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="recorridos" class="section">
+<h2>📍 Recorridos de Camiones</h2>
+<table>
+<tr><th>Ruta</th><th>GPS</th><th>Velocidad Prom.</th><th>Consumo Prom.</th><th>Carga</th><th>Tiempo</th><th>Vehículo Encendido</th><th>Distancia</th></tr>
+<tr><td>Santiago - David</td><td>8.10,-80.97</td><td>78 km/h</td><td>8.4 km/L</td><td>Alimentos refrigerados</td><td>3h 20m</td><td>4h 05m</td><td>210 km</td></tr>
+<tr><td>Santiago - Panamá</td><td>8.09,-80.95</td><td>85 km/h</td><td>7.9 km/L</td><td>Bebidas</td><td>4h 15m</td><td>5h 00m</td><td>250 km</td></tr>
+<tr><td>Santiago - Chitré</td><td>8.11,-80.94</td><td>72 km/h</td><td>8.8 km/L</td><td>Productos secos</td><td>2h 10m</td><td>2h 30m</td><td>140 km</td></tr>
+<tr><td>Santiago - Aguadulce</td><td>8.08,-80.93</td><td>80 km/h</td><td>8.1 km/L</td><td>Lácteos</td><td>1h 50m</td><td>2h 05m</td><td>120 km</td></tr>
+</table>
+</div>
+
+<div id="reportes" class="section">
+<h2>📈 Reportes Avanzados</h2>
+<select id="tipoReporte">
+<option value="conductor">Rendimiento por conductor</option>
+<option value="vehiculo">Rendimiento por vehículo</option>
+<option value="periodo">Reporte diario, semanal, mensual y anual</option>
+<option value="consumo">Días de mayor consumo</option>
+<option value="proveedor">Comparativa de proveedores</option>
+<option value="costo">Costo por kilómetro</option>
+</select>
+<div class="btn-group">
+<button onclick="generarReporte()">📊 Generar Reporte</button>
+<button onclick="alert('🚀 Exportación a PDF (Demostrativo)')" class="btn-export">📄 Exportar PDF</button>
+<button onclick="alert('📎 Exportación a Excel (Demostrativo)')" class="btn-export-excel">📑 Exportar Excel</button>
+</div>
+<div id="resultadoReporte" class="card" style="margin-top:15px;">Seleccione un reporte y presione generar.</div>
+<canvas id="reportChart"></canvas>
+</div>
+
+<div id="alertas" class="section">
+<h2>⚠️ Alertas y Auditoría</h2>
+<div class="grid">
+<div class="alert-critical">🚨 FLT-115 avería mecánica crítica - fuera de operación</div>
+<div class="alert-critical">🚨 FLT-102 consumo excesivo detectado</div>
+<div class="alert-medium">⚠ Luis con exceso de velocidad promedio</div>
+<div class="alert-medium">⚠ FLT-110 encendido por más de 2 horas sin movimiento</div>
+<div class="alert-medium">⚠ Posible fuga de combustible en FLT-125</div>
+<div class="alert-normal">✓ Mantenimiento preventivo programado FLT-101</div>
+<div class="alert-normal">✓ Teodoro con manejo eficiente destacado</div>
+<div class="alert-normal">✓ Proveedor Terpel con mejor rendimiento mensual</div>
+</div>
+</div>
+
+<div id="flota" class="section">
+<h2>🚛 Administración de Flota</h2>
+<div class="fleet-card"><strong>FLT-101 | Teodoro</strong><br>Ruta: Santiago-David | Carga: Refrigerados | Combustible: Diesel | Gasto: $980 | Velocidad Promedio: 78 km/h | Nivel actual combustible: 68% | Ubicación: Veraguas</div>
+<div class="fleet-card"><strong>FLT-102 | Luis</strong><br>Ruta: Santiago-Panamá | Carga: Bebidas | Combustible: Diesel | Gasto: $1100 | Velocidad Promedio: 85 km/h | Nivel actual combustible: 52% | Ubicación: Coclé</div>
+<div class="fleet-card"><strong>FLT-103 | Alberto</strong><br>Ruta: Santiago-Chitré | Carga: Productos secos | Combustible: Diesel | Gasto: $870 | Velocidad Promedio: 72 km/h | Nivel actual combustible: 74% | Ubicación: Herrera</div>
+<div class="fleet-card"><strong>FLT-104 | Andrés</strong><br>Ruta: Santiago-Aguadulce | Carga: Lácteos | Combustible: Diesel | Gasto: $940 | Velocidad Promedio: 80 km/h | Nivel actual combustible: 61% | Ubicación: Coclé</div>
+<div class="fleet-card"><strong>Total flota:</strong> 30 vehículos operativos con monitoreo diario y control GPS activo.</div>
+</div>
+
+<div id="mantenimiento" class="section">
+<h2>🔧 Mantenimiento de Vehículos</h2>
+<table>
+<tr><th>Vehículo</th><th>Último mantenimiento</th><th>Próximo</th><th>Estado</th><th>Observación</th></tr>
+<tr><td>FLT-101</td><td>10/04/2026</td><td>10/06/2026</td><td>Preventivo</td><td>Cambio de aceite y filtros</td></tr>
+<tr><td>FLT-102</td><td>15/04/2026</td><td>15/06/2026</td><td>Revisión</td><td>Chequeo de frenos</td></tr>
+<tr><td>FLT-115</td><td>20/04/2026</td><td>Urgente</td><td>Averiado</td><td>Falla de transmisión</td></tr>
+<tr><td>FLT-118</td><td>22/04/2026</td><td>22/06/2026</td><td>Preventivo</td><td>Revisión de motor</td></tr>
+</table>
+</div>
+</div>
+
+<script>
+// Usuarios y roles (mismo que antes)
+const users = {
+  admin:{pass:'0000',role:'Administrador'},
+  Super:{pass:'0000',role:'Supervisor'},
+  Teodoro:{pass:'0000',role:'Conductor'},
+  Luis:{pass:'0000',role:'Conductor'},
+  Alberto:{pass:'0000',role:'Conductor'},
+  Andres:{pass:'0000',role:'Conductor'},
+  Carlos:{pass:'0000',role:'Conductor'},
+  Miguel:{pass:'0000',role:'Conductor'},
+  Javier:{pass:'0000',role:'Conductor'},
+  Pedro:{pass:'0000',role:'Conductor'}
+};
+
+let reportChartInstance = null;
+let fuelChart, driverChart, monthlyChart, vehicleChart;
+
+function login(){
+  const u = document.getElementById('user').value.trim();
+  const p = document.getElementById('pass').value.trim();
+  if(users[u] && users[u].pass === p){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('welcome').innerHTML = `Bienvenido <b>${u}</b> (${users[u].role})`;
+    buildTabs(users[u].role);
+    loadCharts();
+  } else {
+    alert('Credenciales incorrectas');
+  }
+}
+
+function logout(){
+  location.reload();
+}
+
+function buildTabs(role){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  let options = ['dashboard','solicitudes','carga','recorridos'];
+  if(role === 'Administrador' || role === 'Supervisor'){
+    options.push('reportes','alertas');
+  }
+  if(role === 'Administrador'){
+    options.push('flota','mantenimiento');
+  }
+  options.forEach(id => {
+    const btn = document.createElement('div');
+    btn.className = 'tab';
+    if(id === 'dashboard') btn.classList.add('active');
+    btn.innerText = id.charAt(0).toUpperCase() + id.slice(1);
+    btn.onclick = () => showSection(id, btn);
+    tabs.appendChild(btn);
+  });
+}
+
+function showSection(id, btn){
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if(target) target.classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Registrar solicitud - agrega fila a la tabla de solicitudes
+function registrarSolicitud(){
+  const conductor = document.getElementById('solConductor').value.trim();
+  const vehiculo = document.getElementById('solVehiculo').value;
+  const odometro = document.getElementById('solOdometro').value.trim();
+  const nivel = document.getElementById('solNivel').value;
+  if(!conductor || !odometro || !nivel){
+    alert('Complete todos los campos de la solicitud');
+    return;
+  }
+  const tabla = document.getElementById('tablaSolicitudes').getElementsByTagName('tbody')[0];
+  const newRow = tabla.insertRow();
+  newRow.innerHTML = `<td>${conductor}</td><td>${vehiculo}</td><td>${odometro} km</td><td>${nivel}%</td><td>Pendiente</td>`;
+  // Limpiar campos
+  document.getElementById('solConductor').value = '';
+  document.getElementById('solOdometro').value = '';
+  document.getElementById('solNivel').value = '';
+  alert('✅ Solicitud registrada (modo demostración)');
+}
+
+// Registrar carga - agrega fila a la tabla de cargas
+function registrarCarga(){
+  const vehiculo = document.getElementById('cargaVehiculo').value;
+  const conductor = document.getElementById('cargaConductor').value.trim();
+  const litros = document.getElementById('cargaLitros').value;
+  const factura = document.getElementById('cargaFactura').value.trim();
+  const proveedor = document.getElementById('cargaProveedor').value.trim();
+  if(!conductor || !litros || !factura || !proveedor){
+    alert('Complete todos los campos de carga');
+    return;
+  }
+  const ahora = new Date();
+  const fechaHora = `${ahora.toLocaleDateString()} ${ahora.toLocaleTimeString()}`;
+  const tabla = document.getElementById('tablaCargas').getElementsByTagName('tbody')[0];
+  const newRow = tabla.insertRow();
+  newRow.innerHTML = `<td>${vehiculo}</td><td>${conductor}</td><td>${litros}</td><td>${factura}</td><td>${proveedor}</td><td>${fechaHora}</td>`;
+  // Limpiar
+  document.getElementById('cargaConductor').value = '';
+  document.getElementById('cargaLitros').value = '';
+  document.getElementById('cargaFactura').value = '';
+  document.getElementById('cargaProveedor').value = '';
+  alert('✅ Carga registrada (modo demostración)');
+  // Opcional: actualizar KPI de consumo diario (efecto visual)
+  actualizarKPIs();
+}
+
+// Simular actualización de KPIs (solo efecto demostrativo)
+function actualizarKPIs(){
+  const consumoElem = document.getElementById('consumoDiario');
+  if(consumoElem){
+    let actual = parseInt(consumoElem.innerText.replace(' L','').replace(',',''));
+    if(isNaN(actual)) actual = 6500;
+    const nuevo = actual + Math.floor(Math.random() * 100);
+    consumoElem.innerText = nuevo.toLocaleString() + ' L';
+  }
+}
+
+function generarReporte(){
+  const tipo = document.getElementById('tipoReporte').value;
+  const box = document.getElementById('resultadoReporte');
+  const canvas = document.getElementById('reportChart');
+
+  const reportes = {
+    conductor: 'Top conductores: Teodoro 9.1 | Luis 8.7 | Alberto 8.4 | Carlos 8.3 km/L',
+    vehiculo: 'Mejor vehículo: FLT-101 8.9 km/L | FLT-102 8.2 km/L',
+    periodo: 'Mensual: 195,000 L | Anual: 2,340,000 L',
+    consumo: 'Mayor consumo: viernes y sábado con promedio de 7,100 L',
+    proveedor: 'Proveedor recomendado: Terpel | ahorro mensual estimado: $850',
+    costo: 'Costo promedio operativo: $1.75 por kilómetro'
+  };
+
+  const chartData = {
+    conductor:{labels:['Teodoro','Luis','Alberto','Carlos'],data:[9.1,8.7,8.4,8.3],label:'Km/L por conductor'},
+    vehiculo:{labels:['FLT-101','FLT-102','FLT-103','FLT-104'],data:[8.9,8.2,8.5,8.1],label:'Rendimiento por vehículo'},
+    periodo:{labels:['Diario','Semanal','Mensual','Anual'],data:[6500,45500,195000,2340000],label:'Consumo por período'},
+    consumo:{labels:['Lunes','Miércoles','Viernes','Sábado'],data:[6200,6700,7100,7000],label:'Días de mayor consumo'},
+    proveedor:{labels:['Terpel','Delta','Puma','Texaco'],data:[95,88,84,81],label:'Eficiencia por proveedor (%)'},
+    costo:{labels:['FLT-101','FLT-102','FLT-103','FLT-104'],data:[1.62,1.75,1.68,1.80],label:'Costo por km ($)'}
+  };
+
+  box.innerHTML = reportes[tipo] || 'Reporte generado';
+
+  if(reportChartInstance){
+    reportChartInstance.destroy();
+  }
+
+  reportChartInstance = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: chartData[tipo].labels,
+      datasets: [{
+        label: chartData[tipo].label,
+        data: chartData[tipo].data,
+        backgroundColor:['#2563eb','#f97316','#16a34a','#dc2626'],
+        borderRadius: 8,
+        animation: { duration: 1000, easing: 'easeOutBounce' }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { labels: { font: { size: 12 } } } }
+    }
+  });
+}
+
+function loadCharts(){
+  const fuelCanvas = document.getElementById('fuelChart');
+  const driverCanvas = document.getElementById('driverChart');
+  const monthlyCanvas = document.getElementById('monthlyChart');
+  const vehicleCanvas = document.getElementById('vehicleChart');
+
+  if(fuelCanvas){
+    fuelChart = new Chart(fuelCanvas, {
+      type: 'bar',
+      data: {
+        labels: ['Lun','Mar','Mié','Jue','Vie','Sáb'],
+        datasets: [{ label: 'Consumo diario (L)', data: [6200,6500,6700,6400,6900,6500], backgroundColor: '#3b82f6', borderRadius: 8 }]
+      },
+      options: { animation: { duration: 1200, easing: 'easeOutElastic' } }
+    });
+  }
+  if(driverCanvas){
+    driverChart = new Chart(driverCanvas, {
+      type: 'line',
+      data: {
+        labels: ['Teodoro','Luis','Alberto','Andrés','Carlos','Miguel'],
+        datasets: [{ label: 'Top conductores eficientes (km/L)', data: [9.1,8.7,8.4,8.1,8.3,8.2], borderColor: '#f97316', tension: 0.3, fill: false }]
+      },
+      options: { animation: { duration: 1000 } }
+    });
+  }
+  if(monthlyCanvas){
+    monthlyChart = new Chart(monthlyCanvas, {
+      type: 'line',
+      data: {
+        labels: ['Sem 1','Sem 2','Sem 3','Sem 4'],
+        datasets: [{ label: 'Rendimiento semanal (km/L)', data: [8.0,8.3,8.1,8.4], borderColor: '#16a34a', tension: 0.4 }]
+      },
+      options: { animation: { duration: 1000 } }
+    });
+  }
+  if(vehicleCanvas){
+    vehicleChart = new Chart(vehicleCanvas, {
+      type: 'bar',
+      data: {
+        labels: ['FLT-101','FLT-102','FLT-103','FLT-104'],
+        datasets: [{ label: 'Rendimiento por vehículo', data: [8.9,8.2,8.5,8.1], backgroundColor: '#2563eb', borderRadius: 8 }]
+      },
+      options: { animation: { duration: 1100, easing: 'easeOutBack' } }
+    });
+  }
+}
+</script>
+</body>
+</html>
